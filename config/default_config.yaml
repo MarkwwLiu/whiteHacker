@@ -1,0 +1,46 @@
+# WhiteHats Security Testing Framework - Default Configuration
+
+scan:
+  # Request timeout in seconds
+  timeout: 10
+  # Delay between requests in seconds (be respectful)
+  request_delay: 0.5
+  # Maximum concurrent requests
+  max_concurrent: 5
+  # Follow redirects
+  follow_redirects: true
+  # Verify SSL certificates
+  verify_ssl: true
+  # Custom User-Agent
+  user_agent: "WhiteHats-SecurityScanner/1.0"
+
+modules:
+  # Enable/disable specific security test modules
+  sql_injection:
+    enabled: true
+    level: 1  # 1=basic, 2=moderate, 3=aggressive
+  xss:
+    enabled: true
+    level: 1
+  csrf:
+    enabled: true
+  header_security:
+    enabled: true
+  cors_misconfig:
+    enabled: true
+  info_disclosure:
+    enabled: true
+
+report:
+  # Output format: json, html, or both
+  format: json
+  # Output directory
+  output_dir: reports
+  # Include request/response details
+  include_details: true
+
+generator:
+  # Directory for auto-generated test cases
+  output_dir: test_cases
+  # Template style: pytest
+  style: pytest
