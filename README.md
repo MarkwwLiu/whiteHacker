@@ -1,117 +1,116 @@
-# WhiteHats - Automated White Hat Security Testing Framework
+# WhiteHats - 自動化白帽安全測試框架
 
-Python-based automated white hat security testing framework. Provide an API endpoint or URL, and it auto-generates and runs security test cases.
+基於 Python 的自動化白帽安全測試框架。只需提供 API 端點或 URL，即可自動產生並執行安全測試案例。
 
-## Architecture
+## 架構
 
 ```
 whiteHacker/
 ├── config/
-│   ├── default_config.yaml        # Default scan settings
-│   └── targets_example.json       # Example targets file
-├── whitehats/                     # Core framework package
-│   ├── cli.py                     # CLI entry point
-│   ├── config.py                  # Configuration loader
-│   ├── models/                    # Data models
-│   │   ├── target.py              # Target (API/URL) models
-│   │   ├── vulnerability.py       # Vulnerability finding model
-│   │   └── test_case.py           # Test case model
-│   ├── scanner/                   # Scan engine
-│   │   ├── base_scanner.py        # Abstract base scanner
-│   │   ├── api_scanner.py         # API endpoint scanner
-│   │   └── url_scanner.py         # URL page scanner
-│   ├── modules/                   # Security test modules (pluggable)
-│   │   ├── base_module.py         # Abstract base module
-│   │   ├── sql_injection.py       # SQL Injection detection
-│   │   ├── xss.py                 # Cross-Site Scripting detection
-│   │   ├── csrf.py                # CSRF protection check
-│   │   ├── header_security.py     # Security headers audit
-│   │   ├── cors_misconfig.py      # CORS misconfiguration check
-│   │   └── info_disclosure.py     # Information disclosure check
-│   ├── generator/                 # Test case auto-generator
-│   │   ├── test_generator.py      # Generates pytest files
-│   │   └── template_engine.py     # Test file templates
-│   ├── payloads/                  # Attack payload data
+│   ├── default_config.yaml        # 預設掃描設定
+│   └── targets_example.json       # 多目標範例檔
+├── whitehats/                     # 核心框架套件
+│   ├── cli.py                     # CLI 進入點
+│   ├── config.py                  # 設定載入器
+│   ├── models/                    # 資料模型
+│   │   ├── target.py              # 目標模型 (API/URL)
+│   │   ├── vulnerability.py       # 漏洞發現模型
+│   │   └── test_case.py           # 測試案例模型
+│   ├── scanner/                   # 掃描引擎
+│   │   ├── base_scanner.py        # 抽象基底掃描器
+│   │   ├── api_scanner.py         # API 端點掃描器
+│   │   └── url_scanner.py         # URL 頁面掃描器
+│   ├── modules/                   # 安全測試模組（插件式）
+│   │   ├── base_module.py         # 抽象基底模組
+│   │   ├── sql_injection.py       # SQL 注入偵測
+│   │   ├── xss.py                 # 跨站腳本攻擊偵測
+│   │   ├── csrf.py                # CSRF 防護檢查
+│   │   ├── header_security.py     # 安全標頭稽核
+│   │   ├── cors_misconfig.py      # CORS 錯誤設定檢查
+│   │   └── info_disclosure.py     # 資訊洩漏檢查
+│   ├── generator/                 # 測試案例自動產生器
+│   │   ├── test_generator.py      # 產生 pytest 測試檔
+│   │   └── template_engine.py     # 測試檔範本引擎
+│   ├── payloads/                  # 攻擊載荷資料
 │   │   ├── sql_payloads.txt
 │   │   └── xss_payloads.txt
-│   └── reporter/                  # Report generation
+│   └── reporter/                  # 報告產生器
 │       ├── base_reporter.py
-│       ├── json_reporter.py       # JSON report output
-│       └── html_reporter.py       # HTML report output
-├── test_cases/                    # Auto-generated test cases (decoupled)
-├── reports/                       # Generated reports output
-└── tests/                         # Framework unit tests
+│       ├── json_reporter.py       # JSON 格式報告
+│       └── html_reporter.py       # HTML 格式報告
+├── test_cases/                    # 自動產生的測試案例（解耦，獨立存放）
+├── reports/                       # 產出的報告
+└── tests/                         # 框架本身的單元測試
 ```
 
-## Flow Diagram
+## 流程圖
 
 ```
                     ┌─────────────────┐
-                    │   User Input    │
+                    │   使用者輸入     │
                     │  (API / URL)    │
                     └────────┬────────┘
                              │
                     ┌────────▼────────┐
-                    │   CLI / Config  │
-                    │   Parse Targets │
+                    │  CLI / 設定檔   │
+                    │   解析目標      │
                     └────────┬────────┘
                              │
               ┌──────────────┴──────────────┐
               │                             │
      ┌────────▼────────┐          ┌────────▼────────┐
-     │  API Scanner    │          │  URL Scanner    │
+     │  API 掃描器      │          │  URL 掃描器     │
      │  (APITarget)    │          │  (URLTarget)    │
      └────────┬────────┘          └────────┬────────┘
               │                             │
               └──────────────┬──────────────┘
                              │
                     ┌────────▼────────┐
-                    │  Security       │
-                    │  Modules        │
-                    │  (Pluggable)    │
+                    │  安全測試模組    │
+                    │  （插件式）      │
                     ├─────────────────┤
-                    │ • SQL Injection │
+                    │ • SQL 注入      │
                     │ • XSS           │
                     │ • CSRF          │
-                    │ • Headers       │
+                    │ • 安全標頭      │
                     │ • CORS          │
-                    │ • Info Leak     │
+                    │ • 資訊洩漏      │
                     └────────┬────────┘
                              │
               ┌──────────────┴──────────────┐
               │                             │
      ┌────────▼────────┐          ┌────────▼────────┐
-     │  Test Generator │          │  Report Gen     │
-     │  (pytest files) │          │  (JSON / HTML)  │
+     │  測試案例產生器   │          │  報告產生器     │
+     │  (pytest 檔案)  │          │  (JSON / HTML)  │
      └────────┬────────┘          └────────┬────────┘
               │                             │
      ┌────────▼────────┐          ┌────────▼────────┐
      │  test_cases/    │          │  reports/       │
-     │  (decoupled)    │          │  (output)       │
+     │  （解耦獨立）    │          │  （輸出結果）    │
      └─────────────────┘          └─────────────────┘
 ```
 
-## Installation
+## 安裝
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Usage
+## 使用方式
 
-### 1. Scan a single URL
+### 1. 掃描單一 URL
 
 ```bash
 python -m whitehats.cli scan --url https://example.com
 ```
 
-### 2. Scan an API endpoint
+### 2. 掃描 API 端點
 
 ```bash
 python -m whitehats.cli scan --url https://example.com/api/users --api --method GET --params '{"id": "1"}'
 ```
 
-### 3. Scan API with POST body and auth token
+### 3. 掃描帶有 POST 請求體與認證 Token 的 API
 
 ```bash
 python -m whitehats.cli scan \
@@ -122,44 +121,44 @@ python -m whitehats.cli scan \
   --token "your-bearer-token"
 ```
 
-### 4. Scan multiple targets from file
+### 4. 從檔案掃描多個目標
 
 ```bash
 python -m whitehats.cli scan --targets-file config/targets_example.json
 ```
 
-### 5. Generate test cases only (no scanning)
+### 5. 僅產生測試案例（不執行掃描）
 
 ```bash
 python -m whitehats.cli generate --url https://example.com/api/users --api --method GET --params '{"id": "1"}'
 ```
 
-Then run the generated tests:
+接著執行產生的測試：
 
 ```bash
 pytest test_cases/
 ```
 
-### 6. Use custom config
+### 6. 使用自訂設定檔
 
 ```bash
 python -m whitehats.cli scan --url https://example.com -c my_config.yaml
 ```
 
-## Security Modules
+## 安全測試模組
 
-| Module | Description | Severity |
-|--------|-------------|----------|
-| SQL Injection | Tests params and body for SQL injection | HIGH |
-| XSS | Tests for reflected cross-site scripting | HIGH |
-| CSRF | Checks CSRF token and SameSite cookie | MEDIUM |
-| Header Security | Audits security headers (HSTS, CSP, etc.) | MEDIUM |
-| CORS Misconfig | Tests for CORS wildcard, reflection, null | MEDIUM |
-| Info Disclosure | Scans for leaked sensitive data patterns | varies |
+| 模組 | 說明 | 嚴重程度 |
+|------|------|----------|
+| SQL 注入 | 測試參數與請求體是否存在 SQL 注入漏洞 | 高 |
+| XSS | 測試是否存在反射型跨站腳本攻擊 | 高 |
+| CSRF | 檢查 CSRF Token 與 SameSite Cookie 設定 | 中 |
+| 安全標頭 | 稽核安全標頭（HSTS、CSP 等） | 中 |
+| CORS 錯誤設定 | 測試 CORS 萬用字元、來源反射、空來源 | 中 |
+| 資訊洩漏 | 掃描回應中是否洩漏敏感資料 | 依情況 |
 
-## Adding a Custom Module
+## 新增自訂模組
 
-Create a new file in `whitehats/modules/` inheriting from `BaseModule`:
+在 `whitehats/modules/` 目錄下建立新檔案，繼承 `BaseModule`：
 
 ```python
 from whitehats.modules.base_module import BaseModule
@@ -167,17 +166,17 @@ from whitehats.models.vulnerability import Vulnerability, Severity
 
 class MyCustomModule(BaseModule):
     name = "my_custom"
-    description = "My custom security check"
+    description = "自訂安全檢查模組"
 
     def run(self, target, baseline_response):
         findings = []
-        # Your security test logic here
+        # 在此撰寫安全測試邏輯
         return findings
 ```
 
-Then add it to `whitehats/modules/__init__.py` in the `ALL_MODULES` list.
+然後將其加入 `whitehats/modules/__init__.py` 的 `ALL_MODULES` 清單中。
 
-## Targets File Format
+## 目標檔案格式
 
 ```json
 {
@@ -189,7 +188,7 @@ Then add it to `whitehats/modules/__init__.py` in the `ALL_MODULES` list.
       "params": {},
       "headers": {"Content-Type": "application/json"},
       "body": {"key": "value"},
-      "auth_token": "optional-token"
+      "auth_token": "選填的認證 Token"
     },
     {
       "type": "url",
