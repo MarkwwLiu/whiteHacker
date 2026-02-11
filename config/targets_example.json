@@ -1,0 +1,29 @@
+{
+  "targets": [
+    {
+      "type": "api",
+      "name": "Get Users API",
+      "url": "https://example.com/api/users",
+      "method": "GET",
+      "params": {"id": "1", "page": "1"},
+      "headers": {},
+      "body": null
+    },
+    {
+      "type": "api",
+      "name": "Login API",
+      "url": "https://example.com/api/login",
+      "method": "POST",
+      "params": {},
+      "headers": {"Content-Type": "application/json"},
+      "body": {"username": "test", "password": "test123"},
+      "auth_token": null
+    },
+    {
+      "type": "url",
+      "name": "Homepage",
+      "url": "https://example.com",
+      "headers": {}
+    }
+  ]
+}
