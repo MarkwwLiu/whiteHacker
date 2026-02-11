@@ -12,5 +12,5 @@ venv/
 env/
 reports/*.json
 reports/*.html
-test_cases/generated_*.py
+test_cases/*.py
 .pytest_cache/
