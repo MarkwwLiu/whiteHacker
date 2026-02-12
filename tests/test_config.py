@@ -90,3 +90,54 @@ class TestLoadConfig:
         config = load_config("/nonexistent/path.yaml")
         # Should fallback to defaults
         assert config["scan"]["timeout"] == 10
+
+    def test_load_empty_yaml_file(self):
+        """Empty YAML file (yaml.safe_load returns None) should use defaults."""
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".yaml", delete=False
+        ) as f:
+            f.write("")  # empty file
+            tmp_path = f.name
+
+        try:
+            config = load_config(tmp_path)
+            assert config["scan"]["timeout"] == 10
+            assert config["modules"]["sql_injection"]["enabled"] is True
+        finally:
+            os.unlink(tmp_path)
+
+    def test_load_config_none_path(self):
+        """Calling with None should load defaults."""
+        config = load_config(None)
+        assert "scan" in config
+        assert "modules" in config
+
+
+@pytest.mark.unit
+@pytest.mark.config
+class TestDeepMergeEdgeCases:
+    """Edge case tests for _deep_merge."""
+
+    def test_empty_override(self):
+        base = {"a": 1, "b": 2}
+        result = _deep_merge(base, {})
+        assert result == {"a": 1, "b": 2}
+
+    def test_empty_base(self):
+        result = _deep_merge({}, {"a": 1})
+        assert result == {"a": 1}
+
+    def test_both_empty(self):
+        result = _deep_merge({}, {})
+        assert result == {}
+
+    def test_override_dict_with_non_dict(self):
+        base = {"a": {"nested": True}}
+        result = _deep_merge(base, {"a": [1, 2, 3]})
+        assert result["a"] == [1, 2, 3]
+
+    def test_mutates_base_in_place(self):
+        base = {"a": 1}
+        result = _deep_merge(base, {"b": 2})
+        assert base is result
+        assert base["b"] == 2
