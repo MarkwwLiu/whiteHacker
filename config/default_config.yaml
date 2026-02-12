@@ -30,6 +30,12 @@ modules:
     enabled: true
   info_disclosure:
     enabled: true
+  ssrf:
+    enabled: true
+    level: 1  # 1=basic, 2=moderate, 3=aggressive
+  path_traversal:
+    enabled: true
+    level: 1  # 1=basic, 2=moderate, 3=aggressive
 
 report:
   # Output format: json, html, or both

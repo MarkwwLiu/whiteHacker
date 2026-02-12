@@ -10,6 +10,7 @@ from colorama import Fore, Style, init as colorama_init
 
 from whitehats import __version__
 from whitehats.config import load_config
+from whitehats.generator.standalone_exporter import StandaloneExporter
 from whitehats.generator.test_generator import TestGenerator
 from whitehats.models.target import APITarget, HTTPMethod, URLTarget
 from whitehats.modules import ALL_MODULES
@@ -17,6 +18,7 @@ from whitehats.reporter.html_reporter import HTMLReporter
 from whitehats.reporter.json_reporter import JSONReporter
 from whitehats.scanner.api_scanner import APIScanner
 from whitehats.scanner.url_scanner import URLScanner
+from whitehats.scanner.concurrent_scanner import ConcurrentScanner
 
 
 def setup_logging(verbose: bool = False):
@@ -129,18 +131,33 @@ def cmd_scan(args):
         sys.exit(1)
 
     all_vulns = []
-    for target in targets:
-        print(f"\n{Fore.YELLOW}Scanning: {target.url}{Style.RESET_ALL}")
 
-        if hasattr(target, "method"):
-            scanner = APIScanner(config=config, modules=ALL_MODULES)
-        else:
-            scanner = URLScanner(config=config, modules=ALL_MODULES)
+    if len(targets) > 1 and not getattr(args, "no_concurrent", False):
+        # Use concurrent scanning for multiple targets
+        max_concurrent = config.get("scan", {}).get("max_concurrent", 5)
+        print(f"\n{Fore.CYAN}Concurrent scanning {len(targets)} targets (max_workers={max_concurrent}){Style.RESET_ALL}")
 
-        vulns = scanner.scan(target)
-        all_vulns.extend(vulns)
+        def on_target_done(url, vulns, completed, total):
+            print(f"  [{completed}/{total}] {url}: {Fore.RED}{len(vulns)}{Style.RESET_ALL} findings")
 
-        print(f"  Found {Fore.RED}{len(vulns)}{Style.RESET_ALL} potential issues")
+        concurrent = ConcurrentScanner(config=config, modules=ALL_MODULES)
+        results = concurrent.scan(targets, progress_callback=on_target_done)
+        for vulns in results.values():
+            all_vulns.extend(vulns)
+    else:
+        # Single target - sequential scan
+        for target in targets:
+            print(f"\n{Fore.YELLOW}Scanning: {target.url}{Style.RESET_ALL}")
+
+            if hasattr(target, "method"):
+                scanner = APIScanner(config=config, modules=ALL_MODULES)
+            else:
+                scanner = URLScanner(config=config, modules=ALL_MODULES)
+
+            vulns = scanner.scan(target)
+            all_vulns.extend(vulns)
+
+            print(f"  Found {Fore.RED}{len(vulns)}{Style.RESET_ALL} potential issues")
 
     # Generate reports
     target_info = {
@@ -224,6 +241,53 @@ def cmd_generate(args):
     print(f"\nRun with: {Fore.CYAN}pytest {config.get('generator', {}).get('output_dir', 'test_cases')}/{Style.RESET_ALL}")
 
 
+def cmd_export(args):
+    """Export a generated test file as a standalone disposable script."""
+    config = load_config(args.config)
+    exporter = StandaloneExporter(config)
+
+    test_dir = config.get("generator", {}).get("output_dir", "test_cases")
+
+    # If --list flag, show available test files and exit
+    if args.list:
+        files = exporter.list_exportable(test_dir)
+        if not files:
+            print(f"{Fore.RED}No exportable test files found in {test_dir}/{Style.RESET_ALL}")
+            sys.exit(1)
+        print(f"\n{Fore.CYAN}Available test files to export:{Style.RESET_ALL}")
+        for i, f in enumerate(files, 1):
+            print(f"  {Fore.YELLOW}[{i}]{Style.RESET_ALL} {f}")
+        print(f"\nUsage: {Fore.CYAN}whitehats export <file_path>{Style.RESET_ALL}")
+        print(f"   or: {Fore.CYAN}whitehats export <file_path> -o my_standalone.py{Style.RESET_ALL}")
+        return
+
+    if not args.file:
+        print(f"{Fore.RED}Please specify a test file to export. Use --list to see available files.{Style.RESET_ALL}")
+        sys.exit(1)
+
+    source = args.file
+
+    # Support numeric selection (e.g. "1" instead of full path)
+    if source.isdigit():
+        files = exporter.list_exportable(test_dir)
+        idx = int(source) - 1
+        if 0 <= idx < len(files):
+            source = files[idx]
+        else:
+            print(f"{Fore.RED}Invalid index: {source}. Use --list to see available files.{Style.RESET_ALL}")
+            sys.exit(1)
+
+    try:
+        output = exporter.export(source_path=source, output_path=args.output)
+        print(f"\n{Fore.GREEN}Exported standalone script:{Style.RESET_ALL}")
+        print(f"  {output}")
+        print(f"\n{Fore.CYAN}Run it anywhere with:{Style.RESET_ALL}")
+        print(f"  pytest {output} -v")
+    except FileNotFoundError as e:
+        print(f"{Fore.RED}{e}{Style.RESET_ALL}")
+        sys.exit(1)
+
+
 def main():
     print_banner()
 
@@ -258,6 +322,23 @@ def main():
     gen_parser.add_argument("--token", type=str, help="Bearer auth token")
     gen_parser.add_argument("--targets-file", type=str, help="JSON file with multiple targets")
 
+    # --- export command ---
+    export_parser = subparsers.add_parser(
+        "export", help="Export a test file as standalone disposable script"
+    )
+    export_parser.add_argument(
+        "file", nargs="?", default=None,
+        help="Path to the test file to export (or index number from --list)",
+    )
+    export_parser.add_argument(
+        "-o", "--output", type=str, default=None,
+        help="Output path for the standalone script",
+    )
+    export_parser.add_argument(
+        "--list", action="store_true",
+        help="List available test files that can be exported",
+    )
+
     args = parser.parse_args()
     setup_logging(args.verbose)
 
@@ -265,6 +346,8 @@ def main():
         cmd_scan(args)
     elif args.command == "generate":
         cmd_generate(args)
+    elif args.command == "export":
+        cmd_export(args)
     else:
         parser.print_help()
 

