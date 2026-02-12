@@ -14,6 +14,8 @@ from whitehats.models.vulnerability import Severity, Vulnerability
 from whitehats.models.test_case import TestCase
 
 
+@pytest.mark.unit
+@pytest.mark.model
 class TestTargetModels:
     """Tests for Target, APITarget, URLTarget."""
 
@@ -67,6 +69,8 @@ class TestTargetModels:
         assert HTTPMethod.DELETE.value == "DELETE"
 
 
+@pytest.mark.unit
+@pytest.mark.model
 class TestVulnerabilityModel:
     """Tests for Vulnerability model."""
 
@@ -107,6 +111,8 @@ class TestVulnerabilityModel:
         assert Severity.CRITICAL.value == "critical"
 
 
+@pytest.mark.unit
+@pytest.mark.model
 class TestTestCaseModel:
     """Tests for TestCase model."""
 

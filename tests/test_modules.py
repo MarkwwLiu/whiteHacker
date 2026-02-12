@@ -36,6 +36,9 @@ def _make_response(text="", status_code=200, headers=None, content=None):
     return resp
 
 
+@pytest.mark.unit
+@pytest.mark.module
+@pytest.mark.sql_injection
 class TestSQLInjectionModule:
     def test_init_loads_payloads(self):
         mod = _make_module(SQLInjectionModule)
@@ -81,6 +84,9 @@ class TestSQLInjectionModule:
         assert "CWE-89" == findings[0].cwe_id
 
 
+@pytest.mark.unit
+@pytest.mark.module
+@pytest.mark.xss
 class TestXSSModule:
     def test_init_loads_payloads(self):
         mod = _make_module(XSSModule)
@@ -115,6 +121,9 @@ class TestXSSModule:
         assert not mod._detect_xss(resp, payload)
 
 
+@pytest.mark.unit
+@pytest.mark.module
+@pytest.mark.csrf
 class TestCSRFModule:
     def test_init(self):
         mod = _make_module(CSRFModule)
@@ -129,6 +138,9 @@ class TestCSRFModule:
         assert len(findings) == 0
 
 
+@pytest.mark.unit
+@pytest.mark.module
+@pytest.mark.header_security
 class TestHeaderSecurityModule:
     def test_missing_headers_detected(self):
         mod = _make_module(HeaderSecurityModule)
@@ -160,6 +172,9 @@ class TestHeaderSecurityModule:
         assert len(missing) == 0
 
 
+@pytest.mark.unit
+@pytest.mark.module
+@pytest.mark.cors
 class TestCORSMisconfigModule:
     def test_wildcard_origin(self):
         mod = _make_module(CORSMisconfigModule)
@@ -183,6 +198,9 @@ class TestCORSMisconfigModule:
         assert len(findings) == 0
 
 
+@pytest.mark.unit
+@pytest.mark.module
+@pytest.mark.info_disclosure
 class TestInfoDisclosureModule:
     def test_detect_email(self):
         mod = _make_module(InfoDisclosureModule)
@@ -208,6 +226,9 @@ class TestInfoDisclosureModule:
         assert len(findings) == 0
 
 
+@pytest.mark.unit
+@pytest.mark.module
+@pytest.mark.ssrf
 class TestSSRFModule:
     def test_init_loads_payloads(self):
         mod = _make_module(SSRFModule)
@@ -262,6 +283,9 @@ class TestSSRFModule:
         assert findings == []
 
 
+@pytest.mark.unit
+@pytest.mark.module
+@pytest.mark.path_traversal
 class TestPathTraversalModule:
     def test_init_loads_payloads(self):
         mod = _make_module(PathTraversalModule)

@@ -30,6 +30,8 @@ def _default_config():
     }
 
 
+@pytest.mark.unit
+@pytest.mark.scanner
 class TestBaseScanner:
     def test_init_config(self):
         config = _default_config()
@@ -64,6 +66,8 @@ class TestBaseScanner:
         assert len(scanner.get_results()) == 0
 
 
+@pytest.mark.unit
+@pytest.mark.scanner
 class TestAPIScanner:
     def test_scan_wrong_target_type(self):
         scanner = APIScanner(config=_default_config())
@@ -103,6 +107,8 @@ class TestAPIScanner:
         mock_instance.run.assert_called_once()
 
 
+@pytest.mark.unit
+@pytest.mark.scanner
 class TestURLScanner:
     def test_scan_wrong_target_type(self):
         scanner = URLScanner(config=_default_config())

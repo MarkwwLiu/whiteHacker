@@ -82,6 +82,8 @@ class TestSecurityHeaders:
 '''
 
 
+@pytest.mark.unit
+@pytest.mark.exporter
 class TestStandaloneExporter:
     def test_export_api_test(self):
         with tempfile.TemporaryDirectory() as tmpdir:

@@ -26,6 +26,8 @@ def _default_config():
     }
 
 
+@pytest.mark.unit
+@pytest.mark.concurrent
 class TestConcurrentScanner:
     def test_init_max_workers(self):
         scanner = ConcurrentScanner(config=_default_config())

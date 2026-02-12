@@ -9,6 +9,8 @@ import yaml
 from whitehats.config import load_config, _deep_merge
 
 
+@pytest.mark.unit
+@pytest.mark.config
 class TestDeepMerge:
     """Tests for _deep_merge helper."""
 
@@ -39,6 +41,8 @@ class TestDeepMerge:
         assert result["a"] == "replaced"
 
 
+@pytest.mark.unit
+@pytest.mark.config
 class TestLoadConfig:
     """Tests for load_config function."""
 
