@@ -40,6 +40,8 @@ def _target_info():
     }
 
 
+@pytest.mark.unit
+@pytest.mark.reporter
 class TestJSONReporter:
     def test_generate_creates_file(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -70,6 +72,8 @@ class TestJSONReporter:
             assert data["summary"]["total_findings"] == 0
 
 
+@pytest.mark.unit
+@pytest.mark.reporter
 class TestHTMLReporter:
     def test_generate_creates_file(self):
         with tempfile.TemporaryDirectory() as tmpdir:

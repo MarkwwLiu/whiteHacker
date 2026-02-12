@@ -82,6 +82,8 @@ class TestSecurityHeaders:
 '''
 
 
+@pytest.mark.unit
+@pytest.mark.exporter
 class TestStandaloneExporter:
     def test_export_api_test(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -181,3 +183,90 @@ class TestStandaloneExporter:
             content = open(output).read()
             # This will raise SyntaxError if the output is invalid Python
             compile(content, output, "exec")
+
+
+SAMPLE_SINGLE_LINE_DOC = '''\
+"""Single line docstring."""
+import pytest
+import requests
+
+TARGET_URL = "https://example.com"
+
+class TestSingle:
+    def test_ok(self, security_session):
+        resp = security_session.get(TARGET_URL, timeout=10)
+        assert resp.status_code == 200
+'''
+
+SAMPLE_NO_DOCSTRING = '''\
+import pytest
+import requests
+
+TARGET_URL = "https://example.com"
+
+class TestNone:
+    def test_ok(self, security_session):
+        resp = security_session.get(TARGET_URL, timeout=10)
+        assert resp.status_code == 200
+'''
+
+
+@pytest.mark.unit
+@pytest.mark.exporter
+class TestExporterEdgeCases:
+    """Edge case tests for StandaloneExporter internals."""
+
+    def test_strip_header_single_line_docstring(self):
+        exporter = StandaloneExporter()
+        body = exporter._strip_header(SAMPLE_SINGLE_LINE_DOC)
+        assert "class TestSingle" in body
+        assert "TARGET_URL" in body
+        assert "Single line docstring" not in body
+
+    def test_strip_header_no_docstring(self):
+        exporter = StandaloneExporter()
+        body = exporter._strip_header(SAMPLE_NO_DOCSTRING)
+        assert "class TestNone" in body
+        assert "TARGET_URL" in body
+
+    def test_is_header_import_true(self):
+        assert StandaloneExporter._is_header_import("import pytest") is True
+        assert StandaloneExporter._is_header_import("import requests") is True
+        assert StandaloneExporter._is_header_import("from urllib.parse import urljoin") is True
+
+    def test_is_header_import_false(self):
+        assert StandaloneExporter._is_header_import("import os") is False
+        assert StandaloneExporter._is_header_import("from pathlib import Path") is False
+        assert StandaloneExporter._is_header_import("TARGET_URL = 'x'") is False
+
+    def test_resolve_output_filename_default(self):
+        from pathlib import Path
+        source = Path("/tmp/test_security_example.py")
+        result = StandaloneExporter._resolve_output_filename(source, None)
+        assert result == "/tmp/standalone_test_security_example.py"
+
+    def test_resolve_output_filename_custom(self):
+        from pathlib import Path
+        source = Path("/tmp/test_security_example.py")
+        result = StandaloneExporter._resolve_output_filename(source, "/output/my.py")
+        assert result == "/output/my.py"
+
+    def test_export_creates_output_directory(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            source = os.path.join(tmpdir, "test_security_example.py")
+            with open(source, "w") as f:
+                f.write(SAMPLE_API_TEST)
+
+            nested_out = os.path.join(tmpdir, "sub", "dir", "out.py")
+            exporter = StandaloneExporter()
+            output = exporter.export(source, output_path=nested_out)
+            assert os.path.exists(output)
+
+    def test_init_default_config(self):
+        exporter = StandaloneExporter()
+        assert exporter.config == {}
+
+    def test_init_custom_config(self):
+        config = {"output_format": "standalone"}
+        exporter = StandaloneExporter(config=config)
+        assert exporter.config is config
