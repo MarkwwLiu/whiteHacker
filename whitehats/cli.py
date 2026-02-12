@@ -17,6 +17,7 @@ from whitehats.reporter.html_reporter import HTMLReporter
 from whitehats.reporter.json_reporter import JSONReporter
 from whitehats.scanner.api_scanner import APIScanner
 from whitehats.scanner.url_scanner import URLScanner
+from whitehats.scanner.concurrent_scanner import ConcurrentScanner
 
 
 def setup_logging(verbose: bool = False):
@@ -129,18 +130,33 @@ def cmd_scan(args):
         sys.exit(1)
 
     all_vulns = []
-    for target in targets:
-        print(f"\n{Fore.YELLOW}Scanning: {target.url}{Style.RESET_ALL}")
 
-        if hasattr(target, "method"):
-            scanner = APIScanner(config=config, modules=ALL_MODULES)
-        else:
-            scanner = URLScanner(config=config, modules=ALL_MODULES)
+    if len(targets) > 1 and not getattr(args, "no_concurrent", False):
+        # Use concurrent scanning for multiple targets
+        max_concurrent = config.get("scan", {}).get("max_concurrent", 5)
+        print(f"\n{Fore.CYAN}Concurrent scanning {len(targets)} targets (max_workers={max_concurrent}){Style.RESET_ALL}")
 
-        vulns = scanner.scan(target)
-        all_vulns.extend(vulns)
+        def on_target_done(url, vulns, completed, total):
+            print(f"  [{completed}/{total}] {url}: {Fore.RED}{len(vulns)}{Style.RESET_ALL} findings")
 
-        print(f"  Found {Fore.RED}{len(vulns)}{Style.RESET_ALL} potential issues")
+        concurrent = ConcurrentScanner(config=config, modules=ALL_MODULES)
+        results = concurrent.scan(targets, progress_callback=on_target_done)
+        for vulns in results.values():
+            all_vulns.extend(vulns)
+    else:
+        # Single target - sequential scan
+        for target in targets:
+            print(f"\n{Fore.YELLOW}Scanning: {target.url}{Style.RESET_ALL}")
+
+            if hasattr(target, "method"):
+                scanner = APIScanner(config=config, modules=ALL_MODULES)
+            else:
+                scanner = URLScanner(config=config, modules=ALL_MODULES)
+
+            vulns = scanner.scan(target)
+            all_vulns.extend(vulns)
+
+            print(f"  Found {Fore.RED}{len(vulns)}{Style.RESET_ALL} potential issues")
 
     # Generate reports
     target_info = {
